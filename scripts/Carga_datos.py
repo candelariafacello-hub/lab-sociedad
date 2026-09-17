@@ -5,13 +5,11 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Ruta ancla: la carpeta donde está este script
+BASE_DIR = Path(__file__).resolve().parent
 
-# Ruta raíz del proyecto
-BASE_DIR = Path.cwd()
-
-# Ruta relativa 
-archivo = "world_happiness_Update_report_2026.csv"
-ruta_csv = BASE_DIR / "lab-sociedad" / "data" / archivo
+# Subís desde scripts/ hasta la raíz del repo, y bajás a data/
+ruta_csv = BASE_DIR.parent / "data" / "world_happiness_Update_report_2026.csv"
 
 # Verificar que el archivo realmente existe antes de cargarlo
 if not ruta_csv.exists():
@@ -77,7 +75,27 @@ fig.text(0.1, 0.01,
          fontsize=8, color="gray")
 
 plt.tight_layout()
+plt.show()
 
-# 10. Guardar ANTES de mostrar
-fig.savefig("top15_felicidad_2026.png", dpi=300, bbox_inches="tight")
+# --- Gráfico 2: dispersión PBI per cápita vs. puntaje de felicidad, todos los países ---
+
+fig2, ax2 = plt.subplots(figsize=(8, 6))
+
+ax2.scatter(df["gdp_per_capita"], df["score"],
+            color="#4C72B0", alpha=0.7, edgecolor="white", linewidth=0.5)
+
+ax2.set_title("PBI per cápita vs. puntaje de felicidad — 147 países, 2026",
+              fontsize=12)
+ax2.set_xlabel("PBI per cápita (escala del índice)")
+ax2.set_ylabel("Puntaje de felicidad (escala 0–10)")
+
+ax2.grid(alpha=0.3)
+for lado in ("top", "right"):
+    ax2.spines[lado].set_visible(False)
+
+fig2.text(0.1, 0.01,
+          "Fuente: world_happiness_Update_report_2026.csv",
+          fontsize=8, color="gray")
+
+plt.tight_layout()
 plt.show()
