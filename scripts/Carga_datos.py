@@ -98,7 +98,25 @@ df_final.isnull().sum()  # Conteo de NA por columna
 # Duplicados
 df_final.duplicated().sum()  # Cantidad de filas exactamente iguales
 
+print("Filas totales:", len(df_final))
+print("Países únicos:", df_final["country"].nunique())
+print("Duplicados por país:", df_final["country"].duplicated().sum())
+print(df_final["country"].value_counts()[df_final["country"].value_counts() > 1])
 
+print(
+    df_final[df_final["country"].isin(
+        ["Lebanon", "Mozambique", "Malawi", "Zimbabwe"]
+    )].sort_values("country")
+)
+print(
+    df[df["country"].isin(
+        ["Lebanon", "Mozambique", "Malawi", "Zimbabwe"]
+    )][
+        ["country", "rank", "gdp_per_capita",
+         "social_support", "healthy_life_expectancy",
+         "freedom", "generosity", "corruption", "score"]
+    ].sort_values("country")
+)
 # ============================================================
 # GRÁFICO 1: TOP 15 PAÍSES CON MAYOR PUNTAJE DE FELICIDAD
 # ============================================================
@@ -191,4 +209,5 @@ fig2.text(
 
 plt.tight_layout()
 plt.show()
+
 
