@@ -18,6 +18,13 @@ if not ruta_csv.exists():
 # Cargar el archivo CSV
 df = pd.read_csv(ruta_csv)
 
+# Promediar países repetidos
+df = df.groupby("country", as_index=False).mean(numeric_only=True)
+
+print("Filas:", len(df))
+print("Países únicos:", df["country"].nunique())
+print("Duplicados:", df["country"].duplicated().sum())
+
 # Inspección inicial de los datos
 print(f"--- Archivo cargado exitosamente desde: {ruta_csv.name} ---")
 print(df.info())
@@ -211,3 +218,109 @@ plt.tight_layout()
 plt.show()
 
 
+# ============================================================
+# GRÁFICO 3: CORRELACIÓN DE LAS VARIABLES CON LA FELICIDAD
+# ============================================================
+
+variables = [
+    "gdp_per_capita",
+    "social_support",
+    "healthy_life_expectancy",
+    "freedom",
+    "generosity",
+    "corruption"
+]
+
+# Calcular correlación de cada variable con score
+correlaciones = df_final[variables + ["score"]].corr()["score"].drop("score")
+
+print("\nCorrelaciones con la felicidad:")
+print(correlaciones)
+
+# Ordenar de menor a mayor
+correlaciones = correlaciones.sort_values()
+
+fig3, ax3 = plt.subplots(figsize=(8, 5))
+
+ax3.barh(
+    correlaciones.index,
+    correlaciones.values
+)
+
+ax3.set_title(
+    "Correlación de distintas variables con el puntaje de felicidad",
+    fontsize=12
+)
+
+ax3.set_xlabel("Correlación con score")
+ax3.set_ylabel("")
+
+ax3.axvline(0, linewidth=1)
+ax3.grid(axis="x", alpha=0.3)
+
+for lado in ("top", "right", "left"):
+    ax3.spines[lado].set_visible(False)
+
+plt.tight_layout()
+
+fig3.savefig(
+    BASE_DIR.parent / "graficos" / "correlacion_variables_felicidad.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+plt.show()
+
+# Cuanto mas cerca de uno mas fuerte es la relacion positiva con felicidad
+
+# ============================================================
+# GRÁFICO 4: TOP 10 VS BOTTOM 10
+# ============================================================
+
+# Seleccionar los 10 países más felices y los 10 menos felices
+top10 = df_final.nlargest(10, "score")
+bottom10 = df_final.nsmallest(10, "score")
+
+# Promedio de las variables en cada grupo
+promedio_top10 = top10[variables].mean()
+promedio_bottom10 = bottom10[variables].mean()
+
+print("\nPromedio TOP 10:")
+print(promedio_top10)
+
+print("\nPromedio BOTTOM 10:")
+print(promedio_bottom10)
+
+# Crear tabla para graficar
+comparacion = pd.DataFrame({
+    "10 países con mayor felicidad": promedio_top10,
+    "10 países con menor felicidad": promedio_bottom10
+})
+
+fig4, ax4 = plt.subplots(figsize=(10, 6))
+
+comparacion.plot(
+    kind="bar",
+    ax=ax4
+)
+
+ax4.set_title(
+    "Comparación de variables: 10 países con mayor y menor felicidad",
+    fontsize=12
+)
+
+ax4.set_xlabel("")
+ax4.set_ylabel("Promedio de la variable")
+
+ax4.grid(axis="y", alpha=0.3)
+
+plt.xticks(rotation=35, ha="right")
+
+plt.tight_layout()
+
+fig4.savefig(
+    BASE_DIR.parent / "graficos" / "top10_vs_bottom10_felicidad.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
+plt.show()
