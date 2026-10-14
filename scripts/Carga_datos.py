@@ -318,3 +318,61 @@ plt.suptitle("Promedio de variables: 10 países con mayor y menor felicidad", fo
 plt.tight_layout()
 fig.savefig(BASE_DIR.parent / "graficos" / "top10_vs_bottom10_felicidad.png", dpi=300, bbox_inches="tight")
 plt.show()
+
+import plotly.express as px
+import plotly.io as pio
+import pycountry_convert as pc
+
+pio.renderers.default = "browser"   # abre el mapa en el navegador (necesario en Spyder)
+
+# 1) Región de cada país (continente)
+correcciones = {
+    "Kosovo": "Europa", "Taiwan Province of China": "Asia",
+    "Hong Kong S.A.R. of China": "Asia", "Palestinian Territories": "Asia",
+    "Northern Cyprus": "Europa", "North Cyprus": "Europa",
+    "Somaliland region": "África", "Somaliland Region": "África",
+    "Congo (Kinshasa)": "África", "Congo (Brazzaville)": "África",
+    "Türkiye": "Asia", "Turkiye": "Asia",
+}
+continentes = {"AF": "África", "AS": "Asia", "EU": "Europa",
+               "NA": "América del Norte", "SA": "América del Sur", "OC": "Oceanía"}
+
+def obtener_region(pais):
+    if pais in correcciones:
+        return correcciones[pais]
+    try:
+        cod = pc.country_name_to_country_alpha2(pais)
+        return continentes[pc.country_alpha2_to_continent_code(cod)]
+    except Exception:
+        return None
+
+df_final["region"] = df_final["country"].apply(obtener_region)
+print("Países sin región:", df_final.loc[df_final["region"].isna(), "country"].tolist())
+df_final = df_final.dropna(subset=["region"])
+
+# 2) Promedios por región
+vars_region = ["score", "depression_pct", "anxiety_pct", "mh_crisis_index"]
+promedios = df_final.groupby("region")[vars_region].mean().round(2)
+print(promedios)
+
+# 3) Cada país toma los valores promedio de su región
+mapa_df = df_final[["country", "region"]].merge(promedios, on="region")
+
+# 4) Mapa: color = felicidad promedio de la región
+fig = px.choropleth(
+    mapa_df,
+    locations="country",
+    locationmode="country names",
+    color="score",
+    hover_name="region",
+    hover_data={"country": False, "score": ":.2f", "depression_pct": ":.2f",
+                "anxiety_pct": ":.2f", "mh_crisis_index": ":.2f"},
+    color_continuous_scale="YlGnBu",
+    labels={"score": "Felicidad", "depression_pct": "Depresión %",
+            "anxiety_pct": "Ansiedad %", "mh_crisis_index": "Índice de crisis"},
+    title="Felicidad y salud mental promedio por región"
+)
+fig.update_layout(geo=dict(showframe=False, showcoastlines=False,
+                           projection_type="natural earth"))
+fig.write_html(BASE_DIR.parent / "graficos" / "mapa_regiones.html")  # solo HTML, sin kaleido
+fig.show()
