@@ -519,7 +519,71 @@ todas = vars_whr + vars_mh
 datos = df_final[[PAIS, PUNTAJE] + todas].dropna().reset_index(drop=True)
 y = datos[PUNTAJE]
 print(f"\nModelo predictivo: {len(datos)} países")
- 
+
+
+# ==============================================
+# TABLA 1 - REGRESIONES LINEALES
+# ==============================================
+
+# Seleccionamos las variables
+columnas = [
+    PUNTAJE,
+    REGION,
+    "PIB per cápita",
+    "Índice de crisis de salud mental"
+]
+
+datos_tabla1 = df_final[columnas].dropna().copy()
+
+# Y es la felicidad que queremos explicar
+y_tabla1 = datos_tabla1[PUNTAJE]
+
+# Regresión 1: solo región
+X1 = pd.get_dummies(
+    datos_tabla1[[REGION]],
+    drop_first=True,
+    dtype=float
+)
+
+# Regresión 2: región + PIB
+X2 = X1.copy()
+X2["PIB per cápita"] = datos_tabla1["PIB per cápita"]
+
+# Regresión 3: región + PIB + salud mental
+X3 = X2.copy()
+X3["Índice de crisis de salud mental"] = datos_tabla1[
+    "Índice de crisis de salud mental"
+]
+
+# Función que calcula el R²
+def calcular_r2(X):
+    modelo = LinearRegression()
+    modelo.fit(X, y_tabla1)
+    return modelo.score(X, y_tabla1)
+
+# Calculamos el R² de cada regresión
+r2_1 = calcular_r2(X1)
+r2_2 = calcular_r2(X2)
+r2_3 = calcular_r2(X3)
+
+# Armamos la tabla
+tabla_1 = pd.DataFrame({
+    "Modelo": ["R1", "R2", "R3"],
+    "Variables": [
+        "Región",
+        "Región + PIB",
+        "Región + PIB + salud mental"
+    ],
+    "R²": [r2_1, r2_2, r2_3]
+})
+
+print("\nPRIMERA TABLA DE REGRESIONES")
+print(tabla_1.round(3).to_string(index=False))
+
+print("Aporte del PIB:", round(r2_2 - r2_1, 3))
+print("Aporte de salud mental:", round(r2_3 - r2_2, 3))
+
+
 # ----------------------------------------------------
 # 1) COMPARAR MODELOS CON VALIDACIÓN CRUZADA
 # ----------------------------------------------------
