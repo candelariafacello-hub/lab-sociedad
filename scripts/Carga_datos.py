@@ -584,6 +584,62 @@ print("Aporte del PIB:", round(r2_2 - r2_1, 3))
 print("Aporte de salud mental:", round(r2_3 - r2_2, 3))
 
 
+# ==============================================
+# TABLA 2 - REGRESIONES DE SALUD MENTAL
+# ==============================================
+
+# Elegimos cuatro indicadores de salud mental
+variables_salud = [
+    "Índice de crisis de salud mental",
+    "Brecha de tratamiento (%)",
+    "Crisis de salud mental juvenil",
+    "Calidad del sistema de salud mental"
+]
+
+# Usamos los países de la primera tabla
+datos_tabla2 = df_final.loc[
+    datos_tabla1.index,
+    [PUNTAJE] + variables_salud
+].dropna().copy()
+
+# Variable que queremos explicar
+y_tabla2 = datos_tabla2[PUNTAJE]
+
+# Guardamos los resultados de cada regresión
+resultados_tabla2 = []
+
+for i in range(1, 5):
+
+    # Agregamos una variable más en cada regresión
+    variables_modelo = variables_salud[:i]
+
+    X = datos_tabla2[variables_modelo]
+
+    # Creamos y ajustamos la regresión lineal
+    modelo = LinearRegression()
+    modelo.fit(X, y_tabla2)
+
+    # Calculamos su R²
+    r2 = modelo.score(X, y_tabla2)
+
+    resultados_tabla2.append({
+        "Modelo": f"R{i}",
+        "Variables": " + ".join(variables_modelo),
+        "R²": r2
+    })
+
+# Creamos la segunda tabla
+tabla_2 = pd.DataFrame(resultados_tabla2)
+
+# Calculamos cuánto aporta cada nueva variable
+tabla_2["Aporte adicional"] = (
+    tabla_2["R²"].diff()
+)
+
+print("\nSEGUNDA TABLA DE REGRESIONES")
+print("Países utilizados:", len(datos_tabla2))
+print(tabla_2.round(3).to_string(index=False))
+
 # ----------------------------------------------------
 # 1) COMPARAR MODELOS CON VALIDACIÓN CRUZADA
 # ----------------------------------------------------
