@@ -688,6 +688,134 @@ print("\nSEGUNDA TABLA DE REGRESIONES")
 print("Países utilizados:", len(datos_tabla2))
 print(tabla_2.round(3).to_string(index=False))
 
+
+# ====================================================
+# PARTE FINAL - ECUACION Y GRAFICOS DE REGRESION
+# ====================================================
+
+# 1. ECUACION: SOLO INDICE DE CRISIS
+
+# Recuperamos los coeficientes del modelo ya entrenado
+a = float(modelo_salud.intercept_)
+b = float(modelo_salud.coef_[0])
+
+print("\nECUACION DE REGRESION LINEAL")
+print(f"Felicidad estimada = {a:.3f} {b:+.3f} x Indice de crisis")
+print("R2:", round(r2_salud, 3))
+
+# 2. GRAFICO: INDICE DE CRISIS VS FELICIDAD
+
+# Valores para dibujar la recta de regresion
+valores_x = np.linspace(
+    datos_region[indice].min(),
+    datos_region[indice].max(),
+    200
+)
+
+X_linea = pd.DataFrame({indice: valores_x})
+valores_y = modelo_salud.predict(X_linea)
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+# Cada punto representa un pais
+ax.scatter(
+    datos_region[indice],
+    y_region,
+    color="#4C72B0",
+    alpha=0.7,
+    label="Países"
+)
+
+# Recta de regresion
+ax.plot(
+    valores_x,
+    valores_y,
+    color="#D62728",
+    linewidth=2,
+    label=f"Regresión lineal (R² = {r2_salud:.3f})"
+)
+
+ax.set_title("Índice de crisis de salud mental y felicidad")
+ax.set_xlabel("Índice de crisis de salud mental")
+ax.set_ylabel("Puntaje de felicidad")
+ax.legend()
+ax.grid(alpha=0.2)
+
+plt.tight_layout()
+
+# Guardamos el grafico
+ruta_graficos = BASE_DIR.parent / "graficos"
+ruta_graficos.mkdir(exist_ok=True)
+
+fig.savefig(
+    ruta_graficos / "regresion_salud_mental.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+plt.close(fig)
+
+
+# 3. MODELO FINAL: SALUD MENTAL + REGION
+
+# Obtenemos los coeficientes del modelo final
+coeficientes = pd.Series(
+    modelo_salud_region.coef_,
+    index=X_salud_region.columns
+)
+
+region_base = sorted(datos_region[REGION].unique())[0]
+
+print("\nMODELO CON SALUD MENTAL Y REGION")
+print("Intercepto:", round(modelo_salud_region.intercept_, 3))
+print("Coeficientes:")
+print(coeficientes.round(3))
+print("Región de referencia:", region_base)
+print("R2:", round(r2_salud_region, 3))
+
+# 4. GRAFICO: FELICIDAD REAL VS ESTIMADA
+
+prediccion_region = modelo_salud_region.predict(
+    X_salud_region
+)
+
+fig, ax = plt.subplots(figsize=(8, 6))
+
+ax.scatter(
+    prediccion_region,
+    y_region,
+    color="#4C72B0",
+    alpha=0.7
+)
+
+# Linea de coincidencia perfecta
+limite_min = min(y_region.min(), prediccion_region.min())
+limite_max = max(y_region.max(), prediccion_region.max())
+
+ax.plot(
+    [limite_min, limite_max],
+    [limite_min, limite_max],
+    color="#D62728",
+    linewidth=2,
+    label="Coincidencia perfecta"
+)
+
+ax.set_title("Felicidad real vs estimada: salud mental + región")
+ax.set_xlabel("Felicidad estimada")
+ax.set_ylabel("Felicidad real")
+ax.legend()
+ax.grid(alpha=0.2)
+
+plt.tight_layout()
+
+fig.savefig(
+    ruta_graficos / "regresion_salud_region.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+plt.close(fig)
+
+print("\nGraficos guardados correctamente.")
+
 # ----------------------------------------------------
 # 1) COMPARAR MODELOS CON VALIDACIÓN CRUZADA
 # ----------------------------------------------------
