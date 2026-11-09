@@ -636,6 +636,54 @@ tabla_2["Aporte adicional"] = (
     tabla_2["R²"].diff()
 )
 
+# ==============================================
+# TABLA 3 - SALUD MENTAL + REGION
+# ==============================================
+
+indice = "Índice de crisis de salud mental"
+
+# Utilizamos los mismos 77 países
+datos_region = df_final.loc[
+    datos_tabla2.index,
+    [PUNTAJE, REGION, indice]
+].dropna().copy()
+
+# Puntaje de felicidad
+y_region = datos_region[PUNTAJE]
+
+# R1: solo índice de crisis
+X_salud = datos_region[[indice]]
+
+modelo_salud = LinearRegression()
+modelo_salud.fit(X_salud, y_region)
+
+r2_salud = modelo_salud.score(X_salud, y_region)
+
+# R2: índice de crisis + región
+regiones = pd.get_dummies(
+    datos_region[[REGION]],
+    drop_first=True,
+    dtype=float
+)
+
+X_salud_region = pd.concat(
+    [X_salud, regiones], axis=1
+)
+
+modelo_salud_region = LinearRegression()
+modelo_salud_region.fit(X_salud_region, y_region)
+
+r2_salud_region = modelo_salud_region.score(
+    X_salud_region, y_region
+)
+
+# Mostrar resultados
+print("\nSALUD MENTAL + REGION")
+print("Países:", len(datos_region))
+print("R1 - Solo salud mental:", round(r2_salud, 3))
+print("R2 - Salud mental + región:", round(r2_salud_region, 3))
+print("Mejora:", round(r2_salud_region - r2_salud, 3))
+
 print("\nSEGUNDA TABLA DE REGRESIONES")
 print("Países utilizados:", len(datos_tabla2))
 print(tabla_2.round(3).to_string(index=False))
