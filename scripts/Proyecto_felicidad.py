@@ -773,5 +773,4 @@ print(datos_modelos.nlargest(3, "Error")[[PAIS, PUNTAJE, "Puntaje predicho", "Er
 print("\nPaíses MENOS felices de lo que predice el modelo:")
 print(datos_modelos.nsmallest(3, "Error")[[PAIS, PUNTAJE, "Puntaje predicho", "Error"]].round(2).to_string(index=False))
 
-print(f"\n→ El modelo final explica el {r2_final:.0%} de las diferencias de felicidad entre países")
-print("  usando solo salud mental y región, sin variables del WHR.")
+print(f"\n→ El modelo final explica el {r2_final:.0%} de las diferencias de felicidad entre países usando solo salud mental y región, sin variables del WHR.")
