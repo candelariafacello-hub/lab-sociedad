@@ -620,22 +620,21 @@ print(f"→ Aporte de la salud mental sobre la región y el PIB: {aporte_sm:+.3f
 if aporte_sm > 0.02:
     print("La salud mental aporta información que la región y el PIB no capturan.")
 else:
-    print("La salud mental casi no aporta una vez que están la región y el PIB.")
+    print("La salud mental casi no aporta una vez que están la región y el PIB, pero no quiere decir que no pueda, por si sola, ser una buena variable para predecir la felicidad.")
  
  
 # 4.3 ELECCIÓN DE LAS VARIABLES DE SALUD MENTAL
-# Ahora abrimos el índice de crisis y miramos sus indicadores por separado.
-# Usamos lo que vimos en la exploración (sección 3):
-#   - Brecha de tratamiento (r aprox -0,81): fuerte y fácil de interpretar (gente sin tratamiento).
+# Usamos lo que vimos en la exploración:
+#   - Brecha de tratamiento (r aprox -0,81): fuerte y fácil de interpretar
 #   - Calidad del sistema de salud mental (r aprox 0,78): fuerte, mide cómo responde el país.
 #   - Crisis de salud mental juvenil (r aprox -0,84): fuerte.
-#   - Depresión (r aprox 0,46): da positiva, al revés de lo esperado. La probamos para ver
-#     si aporta algo cuando ya están las otras.
-# Quedan afuera:
+#   - Depresión (r aprox 0,46): da positiva, al revés de lo esperado. La probamos para ver si aporta algo cuando ya están las otras.
+#
+#  Quedan afuera:
 #   - Ansiedad (r aprox -0,01): no tiene relación lineal con la felicidad.
 #   - Suicidios (r aprox -0,18): relación débil y arrastrada por 2 países con valores extremos.
 #   - Índice de crisis: es un índice compuesto que ya resume los demás indicadores.
-#     Combinarlo con ellos sería repetir información, así que queda solo como referencia.
+
 variables_salud = [
     "Brecha de tratamiento (%)",
     "Calidad del sistema de salud mental",
@@ -643,79 +642,72 @@ variables_salud = [
     "Depresión (%)",
 ]
  
-# Antes de combinarlas miramos si están muy correlacionadas ENTRE SÍ.
+# Antes de combinarlas miramos si están muy correlacionadas entre sí.
 # Si dos variables dan casi la misma información, usarlas juntas casi no mejora el modelo.
 corr_salud = datos_modelos[variables_salud + ["Índice de crisis de salud mental"]].corr().round(2)
+
 print("\n\nCORRELACIÓN ENTRE LAS VARIABLES DE SALUD MENTAL:")
 print(corr_salud.to_string())
  
-print("\n→ Pares de variables muy correlacionadas entre sí (|r| > 0,8):")
-pares_altos = 0
-for i, var1 in enumerate(corr_salud.columns):
-    for var2 in corr_salud.columns[i + 1:]:
-        r = corr_salud.loc[var1, var2]
-        if abs(r) > 0.8:
-            print(f"   {var1} y {var2}: r = {r:.2f}")
-            pares_altos += 1
-if pares_altos == 0:
-    print("   Ninguno.")
- 
- 
 # 4.4 TABLA 2: REGRESIONES CON VARIABLES DE SALUD MENTAL
-# Primero vemos cuánto explica cada variable SOLA.
-r2_solas = {}
-for var in variables_salud + ["Índice de crisis de salud mental"]:
-    _, r2, _ = crear_modelo(datos_modelos[[var]])
-    r2_solas[var] = r2
- 
+
+# Primero vemos cuánto explica cada variable sola.
+# Una regresión con cada variable de SM por separado y su R². Así sabemos cuál explica más por sí misma.
 print("\n\nR² DE CADA VARIABLE DE SALUD MENTAL POR SEPARADO:")
-print(pd.Series(r2_solas, name="R²").sort_values(ascending=False).round(3).to_string())
+for variable in variables_salud + ["Índice de crisis de salud mental"]:
+    modelo, r2, r2a = crear_modelo(datos_modelos[[variable]])
+    print(f"{variable}: R² = {r2:.3f}") # imprime solo 3 decimales
  
-# Después agregamos una variable más en cada regresión, empezando por la que más explica
-# sola. El orden importa: la variable que entra primero se lleva el crédito de la
-# información que comparte con las demás. Así, el "aporte adicional" mide lo que cada
-# variable suma DE NUEVO.
-orden_salud = sorted(variables_salud, key=lambda v: r2_solas[v], reverse=True)
- 
-resultados_tabla2 = []
-for i in range(1, len(orden_salud) + 1):
-    variables_modelo = orden_salud[:i]
-    _, r2, r2a = crear_modelo(datos_modelos[variables_modelo])
-    resultados_tabla2.append({
-        "Modelo": f"R{i}",
-        "Variables": " + ".join(variables_modelo),
-        "R²": r2,
-        "R² ajustado": r2a,
-    })
- 
-tabla_2 = pd.DataFrame(resultados_tabla2)
-tabla_2["Aporte adicional"] = tabla_2["R² ajustado"].diff()
- 
+# Empezamos por la variable con mayor correlación con felicidad y vamos agregando las demás en orden
+# Modelo 1: crisis juvenil
+modelo_sm1, r2_sm1, r2a_sm1 = crear_modelo(datos_modelos[variables_salud[:1]])
+
+# Modelo 2: crisis juvenil + brecha de tratamiento
+modelo_sm2, r2_sm2, r2a_sm2 = crear_modelo(datos_modelos[variables_salud[:2]])
+
+# Modelo 3: crisis juvenil + brecha + calidad del sistema
+modelo_sm3, r2_sm3, r2a_sm3 = crear_modelo(datos_modelos[variables_salud[:3]])
+
+# Modelo 4: crisis juvenil + brecha + calidad del sistema + depresión
+modelo_sm4, r2_sm4, r2a_sm4 = crear_modelo(datos_modelos[variables_salud[:4]])
+# [:4] toma las 4 primeras variables de la lista
+
+tabla_2 = pd.DataFrame({
+    "Modelo": ["Modelo 1", "Modelo 2", "Modelo 3", "Modelo 4"],
+    "Variables": ["Crisis juvenil",
+                  "+ Brecha de tratamiento",
+                  "+ Calidad del sistema",
+                  "+ Depresión"],
+    "R²": [r2_sm1, r2_sm2, r2_sm3, r2_sm4],
+    "R² ajustado": [r2a_sm1, r2a_sm2, r2a_sm3, r2a_sm4],
+    "Aporte adicional": [None, r2a_sm2 - r2a_sm1, r2a_sm3 - r2a_sm2, r2a_sm4 - r2a_sm3],
+})
+
 print("\n\nTABLA 2: REGRESIONES CON VARIABLES DE SALUD MENTAL")
 print(tabla_2.round(3).to_string(index=False))
- 
+
 # Elegimos el modelo con mayor R² ajustado
-mejor = tabla_2["R² ajustado"].idxmax()
-vars_salud_final = orden_salud[:mejor + 1]
-print(f"\n→ El mejor modelo es {tabla_2.loc[mejor, 'Modelo']} ({tabla_2.loc[mejor, 'Variables']}), "
-      f"con R² ajustado = {tabla_2.loc[mejor, 'R² ajustado']:.3f}.")
-print(f"→ Como referencia, el índice de crisis solo tiene R² = {r2_solas['Índice de crisis de salud mental']:.3f}.")
-print("Las variables que agregamos después casi no suman porque repiten información")
-print("de las que ya estaban (ver la correlación entre ellas en 4.3).")
+r2a_modelos = [r2a_sm1, r2a_sm2, r2a_sm3, r2a_sm4]
+posicion_mejor = r2a_modelos.index(max(r2a_modelos))
+vars_salud_final = variables_salud[:posicion_mejor + 1]  
+
+print(f"\n→ El mejor modelo es el Modelo {posicion_mejor + 1}, con R² ajustado = {max(r2a_modelos):.3f}.")
+print(f"→ Usa estas variables: {', '.join(vars_salud_final)}.")
  
  
 # 4.5 MODELO FINAL: SALUD MENTAL + REGIÓN
-# Es el modelo hacia el que guió el análisis: las variables de salud mental elegidas en 4.4
-# más la región. No incluimos el PIB porque es una variable del WHR y queremos que el
-# modelo se enfoque en la salud mental.
+
+# Armamos las variables del modelo (salud mental + columnas 0/1 de región)
 X_final = datos_modelos[vars_salud_final].join(regiones_0_1)
+# Creamos el modelo
 modelo_final, r2_final, r2a_final = crear_modelo(X_final)
  
 print("\n\nMODELO FINAL (SALUD MENTAL + REGIÓN):")
 print(f"R² = {r2_final:.3f} | R² ajustado = {r2a_final:.3f} | {len(y)} países")
 print(f"Sin región: R² ajustado = {tabla_2.loc[mejor, 'R² ajustado']:.3f} -> "
       f"la región aporta {r2a_final - tabla_2.loc[mejor, 'R² ajustado']:+.3f}.")
- 
+
+# Coeficientes del modelo (los "b" de la fórmula)
 coeficientes = pd.Series(modelo_final.coef_, index=X_final.columns, name="Coeficiente")
 print("\nCoeficientes:")
 print(coeficientes.round(3).to_string())
@@ -723,45 +715,41 @@ print("Cada coeficiente indica cuánto cambia el puntaje predicho si esa variabl
 print("y las demás quedan iguales. En las regiones: diferencia de felicidad respecto a Europa.")
  
 # Fórmula de la regresión: Y = a + b1·x1 + b2·x2 + ...
-def texto_formula(modelo, columnas_X, terminos_por_linea=2):
-    '''Arma la fórmula de la regresión como texto, cortando en varias líneas.'''
-    terminos = []
-    for nombre, b in zip(columnas_X, modelo.coef_):
-        signo = "+" if b >= 0 else "−"
-        terminos.append(f"{signo} {abs(b):.3f}·{nombre}")
-    lineas = [f"Felicidad = {modelo.intercept_:.2f}"]
-    for i in range(0, len(terminos), terminos_por_linea):
-        lineas.append("   " + " ".join(terminos[i:i + terminos_por_linea]))
-    return "\n".join(lineas)
- 
-formula = texto_formula(modelo_final, X_final.columns)
+formula = f"Felicidad = {modelo_final.intercept_:.2f}"  
+for variable, b in zip(X_final.columns, modelo_final.coef_): # zip recorre a la vez el nombre de cada variable y su coeficiente
+    signo = "+" if b >= 0 else "−"
+    formula += f"\n   {signo} {abs(b):.3f} · {variable}"
+
 print("\nFÓRMULA DEL MODELO FINAL:")
 print(formula)
 print("(Región: vale 1 si el país es de esa región y 0 si no. Europa es la base.)")
  
 # Gráfico: puntaje real vs predicho
-# Con varias variables no hay una sola recta para dibujar, así que comparamos lo que
-# predice el modelo con el puntaje real. Si el modelo fuera perfecto, todos los puntos
-# estarían sobre la línea roja.
+# Con varias variables no hay una sola recta para dibujar, así que comparamos lo que predice el modelo con el puntaje real. 
+# Si el modelo fuera perfecto, todos los puntos estarían sobre la línea roja.
 datos_modelos["Puntaje predicho"] = modelo_final.predict(X_final)
 datos_modelos["Error"] = datos_modelos[PUNTAJE] - datos_modelos["Puntaje predicho"]
  
 fig, ax = plt.subplots(figsize=(9, 7))
  
-for reg, grupo in datos_modelos.groupby(REGION):
-    ax.scatter(grupo["Puntaje predicho"], grupo[PUNTAJE], alpha=0.8,
-               edgecolor='white', linewidth=0.5, s=50, label=f"{reg} (n={len(grupo)})")
- 
-lim = [datos_modelos[[PUNTAJE, "Puntaje predicho"]].min().min() - 0.2,
-       datos_modelos[[PUNTAJE, "Puntaje predicho"]].max().max() + 0.2]
-ax.plot(lim, lim, color='#D62728', linewidth=2, label="Predicción perfecta")
- 
-# Etiquetamos los 5 países más alejados de lo que predice el modelo
-for _, fila in datos_modelos.loc[datos_modelos["Error"].abs().nlargest(5).index].iterrows():
-    ax.annotate(fila[PAIS], (fila["Puntaje predicho"], fila[PUNTAJE]),
+# Un color por región
+for region, paises_region in datos_modelos.groupby(REGION):
+    ax.scatter(paises_region["Puntaje predicho"], paises_region[PUNTAJE], alpha=0.8,
+               edgecolor='white', linewidth=0.5, s=50,
+               label=f"{region} (n={len(paises_region)})")
+
+# Línea de predicción perfecta (real = predicho)
+minimo = min(datos_modelos[PUNTAJE].min(), datos_modelos["Puntaje predicho"].min()) - 0.2
+maximo = max(datos_modelos[PUNTAJE].max(), datos_modelos["Puntaje predicho"].max()) + 0.2
+ax.plot([minimo, maximo], [minimo, maximo], color='#D62728', linewidth=2, label="Predicción perfecta")
+
+# Etiquetamos los 5 países más alejados de lo que predice el modelo (mayor error, sin importar el signo)
+paises_lejanos = datos_modelos.loc[datos_modelos["Error"].abs().nlargest(5).index]
+for indice, pais in paises_lejanos.iterrows():
+    ax.annotate(pais[PAIS], (pais["Puntaje predicho"], pais[PUNTAJE]),
                 xytext=(6, 6), textcoords='offset points', fontsize=8,
                 arrowprops=dict(arrowstyle='-', color='gray', lw=0.5))
- 
+
 ax.set_title(f"Modelo final (salud mental + región): puntaje real vs predicho\n"
              f"R² = {r2_final:.2f}  |  R² ajustado = {r2a_final:.2f}  |  {len(y)} países",
              fontsize=12, fontweight='bold')
@@ -771,19 +759,19 @@ ax.grid(alpha=0.2)
 ax.legend(fontsize=8, loc="upper left")
 for lado in ("top", "right"):
     ax.spines[lado].set_visible(False)
- 
+
 plt.tight_layout()
-# Fórmula debajo del gráfico
+# Escribimos la fórmula debajo del gráfico
 fig.text(0.5, -0.01, formula + "\n(Región: 1 si el país es de esa región, 0 si no. Base: Europa)",
-         ha="center", va="top", fontsize=9, family="monospace")
+         ha="center", va="top", multialignment="left", fontsize=9, family="monospace")
 fig.savefig(GRAF_DIR / "modelo_final_real_vs_predicho.png", dpi=300, bbox_inches="tight")
 plt.close(fig)
- 
+
+# Países que más se alejan de lo que predice el modelo
 print("\nPaíses MÁS felices de lo que predice el modelo:")
 print(datos_modelos.nlargest(3, "Error")[[PAIS, PUNTAJE, "Puntaje predicho", "Error"]].round(2).to_string(index=False))
 print("\nPaíses MENOS felices de lo que predice el modelo:")
 print(datos_modelos.nsmallest(3, "Error")[[PAIS, PUNTAJE, "Puntaje predicho", "Error"]].round(2).to_string(index=False))
- 
+
 print(f"\n→ El modelo final explica el {r2_final:.0%} de las diferencias de felicidad entre países")
 print("  usando solo salud mental y región, sin variables del WHR.")
- 
