@@ -738,7 +738,7 @@ for region, paises_region in datos_modelos.groupby(REGION):
                edgecolor='white', linewidth=0.5, s=50,
                label=f"{region} (n={len(paises_region)})")
 
-# Línea de predicción perfecta (real = predicho)
+# Línea de predicción del modelo
 minimo = min(datos_modelos[PUNTAJE].min(), datos_modelos["Puntaje predicho"].min()) - 0.2
 maximo = max(datos_modelos[PUNTAJE].max(), datos_modelos["Puntaje predicho"].max()) + 0.2
 ax.plot([minimo, maximo], [minimo, maximo], color='#D62728', linewidth=2, label="Predicción del modelo")
