@@ -517,7 +517,7 @@ print("Como el desempeño cambia tanto de una región a otra, en los modelos vam
 #   R² = 1 -> el modelo predice perfecto
 
 # Problema: el R² sube siempre que agregamos una variable
-# ==> Por eso también miramos el R² AJUSTADO, que penaliza las variables que no suman y sube solo si las variabels nuevas aportan
+# ==> Por eso también miramos el R² AJUSTADO, que penaliza las variables que no suman y sube solo si las variables nuevas aportan
 
 # Un R² alto muestra que las variables están asociadas a la felicidad, no que la causen.
  
@@ -527,7 +527,7 @@ columnas_para_modelos = [PAIS, PUNTAJE, REGION] + variables_whr + variables_salu
 datos_modelos = df_final[columnas_para_modelos].copy() # tabla a parte para los modelos
  
 y = datos_modelos[PUNTAJE] # Y = variable que queremos explicar
-# la difinimos arriba porque todos los modelos explican la misma "y"
+# la definimos arriba porque todos los modelos explican la misma "y"
  
 def r2_ajustado(r2, n, p):
     '''
@@ -636,10 +636,10 @@ else:
 #   - Índice de crisis: es un índice compuesto que ya resume los demás indicadores.
 
 variables_salud = [
-    "Brecha de tratamiento (%)",
-    "Calidad del sistema de salud mental",
-    "Crisis de salud mental juvenil",
-    "Depresión (%)",
+    "Crisis de salud mental juvenil",       
+    "Brecha de tratamiento (%)",            
+    "Calidad del sistema de salud mental",  
+    "Depresión (%)",                        
 ]
  
 # Antes de combinarlas miramos si están muy correlacionadas entre sí.
@@ -704,8 +704,8 @@ modelo_final, r2_final, r2a_final = crear_modelo(X_final)
  
 print("\n\nMODELO FINAL (SALUD MENTAL + REGIÓN):")
 print(f"R² = {r2_final:.3f} | R² ajustado = {r2a_final:.3f} | {len(y)} países")
-print(f"Sin región: R² ajustado = {tabla_2.loc[mejor, 'R² ajustado']:.3f} -> "
-      f"la región aporta {r2a_final - tabla_2.loc[mejor, 'R² ajustado']:+.3f}.")
+print(f"Solo salud mental (Tabla 2): R² ajustado = {max(r2a_modelos):.3f}")
+print(f"→ Sumar la región aporta {r2a_final - max(r2a_modelos):+.3f} de R² ajustado.")
 
 # Coeficientes del modelo (los "b" de la fórmula)
 coeficientes = pd.Series(modelo_final.coef_, index=X_final.columns, name="Coeficiente")
