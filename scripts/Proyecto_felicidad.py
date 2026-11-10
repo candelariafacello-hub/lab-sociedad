@@ -741,7 +741,7 @@ for region, paises_region in datos_modelos.groupby(REGION):
 # Línea de predicción perfecta (real = predicho)
 minimo = min(datos_modelos[PUNTAJE].min(), datos_modelos["Puntaje predicho"].min()) - 0.2
 maximo = max(datos_modelos[PUNTAJE].max(), datos_modelos["Puntaje predicho"].max()) + 0.2
-ax.plot([minimo, maximo], [minimo, maximo], color='#D62728', linewidth=2, label="Predicción perfecta")
+ax.plot([minimo, maximo], [minimo, maximo], color='#D62728', linewidth=2, label="Predicción del modelo")
 
 # Etiquetamos los 5 países más alejados de lo que predice el modelo (mayor error, sin importar el signo)
 paises_lejanos = datos_modelos.loc[datos_modelos["Error"].abs().nlargest(5).index]
